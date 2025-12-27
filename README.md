@@ -2,9 +2,7 @@
 
 A starting point for AI-assisted development.
 
-## What This Is
-
-Not a framework. Not a boilerplate. Just a small set of files that establish:
+Just a small set of files that establish:
 
 - **How we build** - Patterns and philosophy
 - **Where we are** - Session continuity
@@ -28,9 +26,7 @@ CLAUDE.md         # Entry point for AI assistants
 
 ## The Idea
 
-Most agentic frameworks are over-complicated. They try to do too much upfront, killing agility. They layer abstractions on top of Claude Code instead of working with it.
-
-This is simpler. Just markdown files that establish working patterns. No magic, no ceremony.
+Just markdown files that establish working patterns. No magic, no ceremony.
 
 ## Using It
 
