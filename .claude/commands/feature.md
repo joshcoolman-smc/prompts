@@ -1,91 +1,32 @@
 ---
-description: Request a new feature following clean architecture patterns
+description: Start a new feature with clarifying questions
 ---
 
-I need you to implement a new feature: $ARGUMENTS
+I need help implementing: $ARGUMENTS
 
-## Architecture Requirements
+## Before We Start
 
-Use clean architecture with the feature module pattern:
+Ask me about:
+- What problem this solves
+- Who uses it and how
+- Edge cases and constraints
+- How it connects to existing code
+- What "done" looks like
 
-**Feature Module Structure**
-- Create in `features/[feature-name]/`
-- Include: components/, repositories/, services/, hooks/, types/
-- Keep all related code co-located in this single directory
+## When Building
 
-**Three-Layer Pattern**
+Reference `docs/APPROACH.md` for patterns. Key points:
 
-Repository Layer (Data Access):
-- Define interface for data operations
-- Implement concrete class
-- Handle API calls, database queries, external data sources
-- NO business logic here
+- Organize by feature, not by file type
+- Use interface-implementation pattern for flexibility
+- Add layers (repository, service) only when complexity demands it
+- Types first, then implementation
 
-Service Layer (Business Logic):
-- Define interface for business capabilities
-- Implement business rules and workflows
-- Coordinate multiple repositories if needed
-- NO UI framework code here
-- Only add if there's logic beyond simple CRUD
+## Process
 
-Hooks Layer (React Integration):
-- Custom hooks that call services
-- Manage loading, error, and data state
-- Handle React lifecycle and effects
-- Services injected as parameters
+1. Confirm you understand the feature
+2. Ask your clarifying questions
+3. Propose an approach (simple first)
+4. Build incrementally, checking in as you go
 
-**Component Pattern**
-
-Page Component (Server Component):
-- Keep in app/ directory
-- NEVER add 'use client' to page.tsx
-- Handle auth, data fetching, redirects
-- Pass data to display component
-
-Display Component (Client Component):
-- Mark with 'use client'
-- Receive data as props
-- Handle interactivity and local state
-- Event handlers and user interactions
-
-**TypeScript & Validation**
-
-- Define all types in feature's types/ directory
-- Use Zod schemas for validation at boundaries (API responses, form inputs)
-- Create specific error types for domain errors
-- Use discriminated unions for state (loading | success | error)
-
-**Dependency Injection**
-
-- Use service container to wire dependencies
-- Repositories and services injected via constructor
-- Hooks receive services as parameters
-- Makes testing easier
-
-## Before You Start
-
-Ask me clarifying questions about:
-- Business requirements and edge cases
-- Data that needs to be persisted
-- Integration with existing features
-- User workflows and interactions
-
-## Implementation Steps
-
-1. Define types and interfaces first
-2. Create repository interface + implementation (if data access needed)
-3. Create service interface + implementation (if business logic beyond CRUD)
-4. Create custom hooks for React integration
-5. Build page component (server) and display component (client)
-6. Add tests for each layer
-
-## Key Principles
-
-- Organize by feature, not by technical file type
-- Use interfaces to define contracts
-- Dependencies flow inward (UI → Hooks → Services → Repositories)
-- Keep pages as server components
-- Add complexity only when needed
-- Test each layer independently
-
-Start by confirming you understand the feature, then ask your questions before implementing.
+Don't over-engineer. Start with the simplest thing that works.
