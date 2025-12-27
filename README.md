@@ -1,6 +1,6 @@
 # AI-First Development Starter
 
-A minimal, framework-agnostic starting point for AI-assisted development.
+A starting point for AI-assisted development.
 
 ## What This Is
 
@@ -55,4 +55,4 @@ This is simpler. Just markdown files that establish working patterns. No magic, 
 
 ---
 
-*For weekly sessions with collaborators: keep `docs/CURRENT.md` updated so the next session can pick up where you left off.*
+_For weekly sessions with collaborators: keep `docs/CURRENT.md` updated so the next session can pick up where you left off._
