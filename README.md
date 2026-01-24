@@ -1,7 +1,3 @@
-Copy-paste prompts.
-
----
-
 **[Feature Module Pattern](prompt-react-feature-module-pattern.md)**
 Feature module architecture using repositories, hooks, Zod validation, and interface-implementation pattern.
 
