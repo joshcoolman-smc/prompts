@@ -102,7 +102,105 @@ Check for type errors separately if applicable:
 npx tsc --noEmit 2>&1 | head -50
 ```
 
-### 6. Write Findings to ASSESSMENT.md
+### 6. Cruft Detection
+
+Identify deletable files and dependencies. Build a list of candidates.
+
+**Unused Dependencies**
+
+Check for packages in package.json not imported anywhere:
+
+```bash
+# If npx depcheck available, use it
+npx depcheck --json 2>/dev/null | head -100
+```
+
+If depcheck unavailable, manually scan: for each dependency in package.json, grep for its import. Flag any with zero matches.
+
+**Orphaned Files**
+
+Use Explore agent to find:
+
+- Components/modules not imported by any other file
+- Test files for components that no longer exist
+- Storybook stories (.stories.tsx) for deleted components
+- Config files for removed tools (e.g., .eslintrc for project using biome)
+- Empty or near-empty files (<5 lines of actual code)
+- Duplicate files (same content, different names/locations)
+
+**Dead Code Patterns**
+
+- Exports not imported anywhere else in codebase
+- Functions defined but never called
+- Commented-out code blocks (>10 lines)
+- Feature flags that are always true/false
+- ENV variables defined but never read
+
+**Common Cruft Locations**
+
+```bash
+# Old build artifacts
+ls -la dist/ build/ .next/ out/ 2>/dev/null
+
+# Backup files
+find . -name "*.bak" -o -name "*.old" -o -name "*~" -o -name "*.orig" 2>/dev/null
+
+# OS/editor cruft
+find . -name ".DS_Store" -o -name "Thumbs.db" -o -name "*.swp" 2>/dev/null
+```
+
+**Present Cruft for Cleanup**
+
+If cruft found, present categorized list to user:
+
+```
+Question: "Found deletable cruft. What would you like to clean up?"
+Header: "Cleanup"
+Options:
+  1. "Delete all safe cruft" (OS files, backups, empty files)
+  2. "Review each category" (step through deps, orphans, dead code)
+  3. "Skip cleanup" (just document in assessment)
+```
+
+**If "Delete all safe cruft":**
+- Remove .DS_Store, *.bak, *.old, empty files
+- Do NOT auto-delete dependencies or source files
+
+**If "Review each category":**
+
+For unused dependencies:
+```
+Question: "These dependencies appear unused: <list>. Remove from package.json?"
+Header: "Unused deps"
+Options:
+  1. "Remove all listed"
+  2. "Let me pick" (then list each with yes/no)
+  3. "Keep all"
+```
+
+For orphaned files:
+```
+Question: "These files have no imports: <list max 10>. Delete?"
+Header: "Orphans"
+Options:
+  1. "Delete all orphaned files"
+  2. "Let me pick"
+  3. "Keep all"
+```
+
+For dead exports/functions:
+```
+Question: "These exports are never imported: <list>. Remove?"
+Header: "Dead code"
+Options:
+  1. "Remove dead exports"
+  2. "Let me pick"
+  3. "Keep all"
+```
+
+**After cleanup, note what was deleted in ASSESSMENT.md under a "Cleanup Performed" section.**
+
+### 7. Write Findings to ASSESSMENT.md
 
 Create or update `ASSESSMENT.md` at repo root:
 
@@ -129,6 +227,25 @@ Create or update `ASSESSMENT.md` at repo root:
 ### Minor
 <nitpicks, style issues, cleanup opportunities>
 
+## Cruft Identified
+
+### Unused Dependencies
+<list packages not imported anywhere>
+
+### Orphaned Files
+<files with no imports pointing to them>
+
+### Dead Code
+<exports/functions never used>
+
+## Cleanup Performed
+
+<if user chose to delete, list what was removed>
+
+- Removed X unused dependencies
+- Deleted Y orphaned files
+- Cleaned Z dead exports
+
 ## Build Status
 
 <build result and any warnings>
@@ -148,7 +265,7 @@ Create or update `ASSESSMENT.md` at repo root:
 
 If `ASSESSMENT.md` already exists, move previous content under a dated archive section.
 
-### 7. Commit the Assessment
+### 8. Commit the Assessment
 
 Ask user before committing:
 
@@ -168,7 +285,7 @@ git commit -m "Update ASSESSMENT.md from sanity check"
 git push
 ```
 
-### 8. Verbal Summary
+### 9. Verbal Summary
 
 Conclude with:
 
@@ -176,6 +293,8 @@ Conclude with:
 Sanity Check Complete
 
 Issues: X critical, Y major, Z minor
+Cruft: X unused deps, Y orphaned files, Z dead exports
+Cleaned: <what was deleted, if any>
 Build: [Pass | Fail with N errors]
 Health: [Good | Needs Attention | Concerning]
 
@@ -188,7 +307,9 @@ Top concerns:
 ## Behavior
 
 - Adapts checks to detected project type
-- Non-destructive (only writes ASSESSMENT.md)
+- Interactive cleanup: identifies cruft, asks before deleting
+- Safe defaults: auto-delete only OS/backup files, not source code
+- Documents everything in ASSESSMENT.md before and after cleanup
 - Asks before committing
 - Focuses on actionable findings, not style nitpicks
 
