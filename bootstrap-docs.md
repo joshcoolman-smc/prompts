@@ -688,8 +688,6 @@ export function DocsContent({ content }: DocsContentProps) {
 **Vite/TanStack alternative for DocsContent:**
 
 ```tsx
-"use client";
-
 import { useEffect, useState } from "react";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
@@ -697,7 +695,7 @@ import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeSlug from "rehype-slug";
 import rehypeReact from "rehype-react";
-import { createElement, Fragment } from "react";
+import * as jsxRuntime from "react/jsx-runtime";
 import { CodeBlock } from "./CodeBlock";
 
 // Additional deps for Vite: npm install unified remark-parse remark-rehype rehype-react
@@ -716,12 +714,13 @@ export function DocsContent({ content }: DocsContentProps) {
       .use(remarkRehype)
       .use(rehypeSlug)
       .use(rehypeReact, {
-        createElement,
-        Fragment,
+        jsx: jsxRuntime.jsx,
+        jsxs: jsxRuntime.jsxs,
+        Fragment: jsxRuntime.Fragment,
         components: { code: CodeBlock },
-      })
+      } as Parameters<typeof rehypeReact>[0])
       .process(content)
-      .then((file) => setRendered(file.result));
+      .then((file: { result: React.ReactNode }) => setRendered(file.result));
   }, [content]);
 
   return (
