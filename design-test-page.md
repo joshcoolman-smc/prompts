@@ -198,6 +198,39 @@ These elements should appear naturally within the sections above, not as a separ
 - Divider treatment (thickness, color, spacing)
 - Micro-interactions and hover behavior
 
+## 11. Component Architecture
+
+Build components using the shadcn/ui wrapping pattern: Radix primitives for behavior, Tailwind for styling via `cn()`, and `cva` for variant management.
+
+**Key conventions:**
+
+- `forwardRef` on all components -- consumers must be able to attach refs
+- `className` pass-through on every component root -- never block consumer overrides
+- CSS variables for theming (`--primary`, `--radius`, etc.) -- no runtime CSS-in-JS
+- Sensible defaults for all variant props -- components should render well with zero config
+- Compose from Radix primitives rather than building interaction logic from scratch
+
+**Wrapping pattern:**
+
+```tsx
+const Button = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>
+>(({ className, variant, size, ...props }, ref) => (
+  <button
+    className={cn(buttonVariants({ variant, size }), className)}
+    ref={ref}
+    {...props}
+  />
+));
+```
+
+**What this tests:**
+- Prop API consistency -- do all components follow the same `className` + variant pattern?
+- Variant coverage -- does `cva` handle size/color/state without one-off conditionals?
+- Override flexibility -- can consumers restyle without fighting the component?
+- Theme integration -- do components respond to CSS variable changes?
+
 ---
 
 ## General Evaluation Criteria

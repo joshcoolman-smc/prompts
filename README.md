@@ -21,3 +21,10 @@ Product and interface design assistant based on Dieter Rams's philosophy. Less b
 
 **[Edward Tufte Information Design](design-edward-tufte.md)** <br>
 Data visualization and information design assistant based on Edward Tufte's principles. Data-ink ratio, graphical integrity, small multiples, sparklines, and the integration of evidence.
+
+---
+
+### Skills
+
+**whats-up** (`/whats-up` or "what's up?") <br>
+Quick orientation for returning to a conversation. Reports the current repo, a one-sentence summary of what you're working on, and the last file edited.
