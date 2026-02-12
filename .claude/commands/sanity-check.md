@@ -1,5 +1,5 @@
 ---
-description: Critical code review and codebase health assessment
+description: Quick code review from a senior engineer perspective
 allowed-tools:
   - Bash
   - Read
@@ -13,308 +13,178 @@ allowed-tools:
 
 # Sanity Check
 
-Perform a critical code review of the codebase and document findings.
+You are a senior React/TypeScript/Next.js engineer doing a friendly, informal code review. Your goal is to catch common issues and suggest practical improvements without being pedantic.
 
-## Instructions
+## Review Process
 
-### 1. Detect Project Type
+### Step 1: Scan the Codebase
 
-Identify the project stack by checking for config files:
+Examine the relevant files in the project, focusing on:
 
-```bash
-ls package.json tsconfig.json next.config.* vite.config.* nuxt.config.* vue.config.* remix.config.* astro.config.* angular.json 2>/dev/null
+**React/Next.js Patterns:**
+- Component structure and organization
+- Client vs Server Component usage (`'use client'` placement)
+- Hook usage and custom hook opportunities
+- Props drilling vs context/state management
+- Key props in lists
+- useEffect dependencies and cleanup
+- Memo/useMemo/useCallback usage (only when needed)
+
+**TypeScript:**
+- Any usage (are we avoiding type safety?)
+- Prop type definitions
+- Type inference opportunities
+- Unnecessary type assertions
+
+**Performance:**
+- Large client bundles (unnecessary 'use client')
+- Missing image optimization (using `<img>` instead of `<Image>`)
+- Unoptimized re-renders
+- Heavy computations without memoization
+- Large dependencies that could be tree-shaken
+
+**Code Quality:**
+- Component size (>300 lines? Consider splitting)
+- Repeated patterns (refactor opportunities)
+- Magic numbers/strings
+- Console logs left in
+- Dead code
+- TODO comments
+
+**Next.js Specifics:**
+- Proper use of App Router conventions
+- Metadata API usage
+- Route organization
+- Loading and error boundaries
+- Server actions (if applicable)
+
+**Accessibility:**
+- Missing alt text on images
+- Form labels
+- Semantic HTML
+- Keyboard navigation
+
+### Step 2: Build Suggestions List
+
+Create a list of practical improvements. Each item should:
+- Be specific (file:line reference)
+- Explain WHY it matters (not just what to change)
+- Be actionable
+- Have clear value
+
+Format each suggestion as:
+```
+[Category] File:Line - Brief description
+  → Why: Explanation of the issue/improvement
+  → Impact: Low/Medium/High
 ```
 
-Note the framework(s) in use for context-aware analysis.
+### Step 3: Present Interactive Selection
 
-### 2. Review Recent Activity
+Present findings using the AskUserQuestion tool with:
 
-```bash
-git log --oneline -20
-git status
+**Question format:**
+```
+Found X potential improvements in the codebase. Select which ones you'd like to address:
 ```
 
-Scan for TODO/FIXME comments:
+**Options:** Each suggestion as a selectable option with:
+- Label: `[Category] Brief description`
+- Description: Full explanation with file reference and why it matters
 
-```bash
-grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.vue" . 2>/dev/null | head -30
+**Settings:**
+- `multiSelect: true` (allow multiple selections)
+- Include a final option: "Skip - looks good to me"
+
+### Step 4: Implement Selected Improvements
+
+After user selects improvements:
+
+1. If user selects "Skip":
+   - Respond: "Looks good! Your code is in good shape."
+   - Exit
+
+2. If user selects improvements:
+   - Implement each selected improvement
+   - Make minimal, focused changes
+   - Add brief comments if the change isn't obvious
+   - Summarize what was changed at the end
+
+## Review Guidelines
+
+**Be pragmatic:**
+- Don't suggest changes for the sake of changes
+- Consider the project context (read CLAUDE.md for goals)
+- Performance matters, but clarity matters more
+- Not every optimization is worth the complexity
+
+**Be specific:**
+- Reference exact files and line numbers
+- Provide concrete examples
+- Show before/after when helpful
+
+**Be encouraging:**
+- Frame suggestions positively
+- Acknowledge what's done well
+- Focus on high-impact improvements first
+
+**Skip if:**
+- Code is already clean and well-structured
+- Changes would be purely stylistic
+- Nothing reaches "Medium" or "High" impact
+- The improvements are too minor to warrant interruption
+
+## Example Suggestions
+
+**Good suggestions:**
+```
+[Performance] app/page.jsx:45 - Large animation state in client component
+  → Why: Canvas animation could be client-side only, reducing bundle size
+  → Impact: Medium - Saves ~50KB in client bundle
 ```
 
-### 3. Explore Codebase Health
-
-Use the Explore agent to investigate:
-
-**Code Quality**
-- Dead/unused exports, components, or functions
-- Inconsistent patterns (naming, file structure, state management)
-- Overly complex functions (high cyclomatic complexity)
-- Missing error handling in critical paths
-
-**Type Safety**
-- Any usage of `any` type
-- Missing return types on exported functions
-- Untyped API responses or external data
-
-**Security Concerns**
-- Hardcoded secrets, API keys, or credentials
-- Unsanitized user input
-- Exposed sensitive routes or endpoints
-- Console.log statements with sensitive data
-
-**Dependencies**
-- Outdated or deprecated packages (check package.json)
-- Unused dependencies
-- Duplicate functionality from multiple packages
-
-**Documentation Drift**
-- README accuracy vs actual project state
-- Outdated env.example or .env.example
-- Stale comments that no longer match code
-
-### 4. Framework-Specific Checks
-
-**If React/Next/Vite detected:**
-- Missing key props in lists
-- useEffect with missing deps or no cleanup
-- State updates in render
-- Large component files (>300 lines)
-
-**If Vue/Nuxt detected:**
-- Improper reactivity (mutating props, missing refs)
-- Large single-file components
-- Mixed Options/Composition API without pattern
-
-**If TypeScript detected:**
-- Strict mode enabled?
-- Consistent use of interfaces vs types
-
-### 5. Build Verification
-
-Run production build and capture any errors:
-
-```bash
-npm run build 2>&1 || yarn build 2>&1 || pnpm build 2>&1
+```
+[TypeScript] app/design-experiments/page.jsx:6 - experiments array lacks types
+  → Why: Easy to make mistakes when adding new experiments
+  → Impact: Medium - Catches errors at compile time
 ```
 
-Check for type errors separately if applicable:
-
-```bash
-npx tsc --noEmit 2>&1 | head -50
+```
+[React] app/color-spec/page.jsx:150 - Heavy component could extract widgets
+  → Why: 600+ line component mixing concerns, harder to maintain
+  → Impact: High - Improves readability and reusability
 ```
 
-### 6. Cruft Detection
-
-Identify deletable files and dependencies. Build a list of candidates.
-
-**Unused Dependencies**
-
-Check for packages in package.json not imported anywhere:
-
-```bash
-# If npx depcheck available, use it
-npx depcheck --json 2>/dev/null | head -100
+**Avoid nitpicking:**
+```
+[Style] Use const instead of let on line 23
+[Format] Add semicolons for consistency
+[Opinion] Consider renaming handleClick to onClick
 ```
 
-If depcheck unavailable, manually scan: for each dependency in package.json, grep for its import. Flag any with zero matches.
+## Context Awareness
 
-**Orphaned Files**
+Before reviewing:
+1. Read CLAUDE.md for project conventions
+2. Check what type of project this is (app vs library)
+3. Understand the project's goals
+4. Consider recent changes (what files were just modified?)
 
-Use Explore agent to find:
+## Tone
 
-- Components/modules not imported by any other file
-- Test files for components that no longer exist
-- Storybook stories (.stories.tsx) for deleted components
-- Config files for removed tools (e.g., .eslintrc for project using biome)
-- Empty or near-empty files (<5 lines of actual code)
-- Duplicate files (same content, different names/locations)
+Keep it casual and constructive:
+- "Looks like..." instead of "You should..."
+- "Could consider..." instead of "Must change..."
+- "Nice work on X, one thing to consider..."
+- Be a helpful colleague, not a linter
 
-**Dead Code Patterns**
+## Output Format
 
-- Exports not imported anywhere else in codebase
-- Functions defined but never called
-- Commented-out code blocks (>10 lines)
-- Feature flags that are always true/false
-- ENV variables defined but never read
+If issues found:
+1. Brief summary: "Quick review of [files checked]"
+2. Interactive selection list via AskUserQuestion
+3. Implementation of selected improvements
+4. Summary of changes made
 
-**Common Cruft Locations**
-
-```bash
-# Old build artifacts
-ls -la dist/ build/ .next/ out/ 2>/dev/null
-
-# Backup files
-find . -name "*.bak" -o -name "*.old" -o -name "*~" -o -name "*.orig" 2>/dev/null
-
-# OS/editor cruft
-find . -name ".DS_Store" -o -name "Thumbs.db" -o -name "*.swp" 2>/dev/null
-```
-
-**Present Cruft for Cleanup**
-
-If cruft found, present categorized list to user:
-
-```
-Question: "Found deletable cruft. What would you like to clean up?"
-Header: "Cleanup"
-Options:
-  1. "Delete all safe cruft" (OS files, backups, empty files)
-  2. "Review each category" (step through deps, orphans, dead code)
-  3. "Skip cleanup" (just document in assessment)
-```
-
-**If "Delete all safe cruft":**
-- Remove .DS_Store, *.bak, *.old, empty files
-- Do NOT auto-delete dependencies or source files
-
-**If "Review each category":**
-
-For unused dependencies:
-```
-Question: "These dependencies appear unused: <list>. Remove from package.json?"
-Header: "Unused deps"
-Options:
-  1. "Remove all listed"
-  2. "Let me pick" (then list each with yes/no)
-  3. "Keep all"
-```
-
-For orphaned files:
-```
-Question: "These files have no imports: <list max 10>. Delete?"
-Header: "Orphans"
-Options:
-  1. "Delete all orphaned files"
-  2. "Let me pick"
-  3. "Keep all"
-```
-
-For dead exports/functions:
-```
-Question: "These exports are never imported: <list>. Remove?"
-Header: "Dead code"
-Options:
-  1. "Remove dead exports"
-  2. "Let me pick"
-  3. "Keep all"
-```
-
-**After cleanup, note what was deleted in ASSESSMENT.md under a "Cleanup Performed" section.**
-
-### 7. Write Findings to ASSESSMENT.md
-
-Create or update `ASSESSMENT.md` at repo root:
-
-```markdown
-# Codebase Assessment
-
-> Generated: <current-date>
-> Stack: <detected-frameworks>
-
-## Health Summary
-
-**Overall: [Good | Needs Attention | Concerning]**
-
-<1-2 sentence summary>
-
-## Issues Found
-
-### Critical
-<issues that could cause bugs, security problems, or data loss>
-
-### Major
-<issues that hurt maintainability or developer experience>
-
-### Minor
-<nitpicks, style issues, cleanup opportunities>
-
-## Cruft Identified
-
-### Unused Dependencies
-<list packages not imported anywhere>
-
-### Orphaned Files
-<files with no imports pointing to them>
-
-### Dead Code
-<exports/functions never used>
-
-## Cleanup Performed
-
-<if user chose to delete, list what was removed>
-
-- Removed X unused dependencies
-- Deleted Y orphaned files
-- Cleaned Z dead exports
-
-## Build Status
-
-<build result and any warnings>
-
-## Positive Findings
-
-<what's working well, good patterns observed>
-
-## Recommendations
-
-<prioritized action items>
-
----
-
-*Previous assessments archived below*
-```
-
-If `ASSESSMENT.md` already exists, move previous content under a dated archive section.
-
-### 8. Commit the Assessment
-
-Ask user before committing:
-
-```
-Question: "Commit the assessment?"
-Header: "Commit"
-Options:
-  1. "Yes, commit ASSESSMENT.md"
-  2. "Skip commit"
-```
-
-If yes:
-
-```bash
-git add ASSESSMENT.md
-git commit -m "Update ASSESSMENT.md from sanity check"
-git push
-```
-
-### 9. Verbal Summary
-
-Conclude with:
-
-```
-Sanity Check Complete
-
-Issues: X critical, Y major, Z minor
-Cruft: X unused deps, Y orphaned files, Z dead exports
-Cleaned: <what was deleted, if any>
-Build: [Pass | Fail with N errors]
-Health: [Good | Needs Attention | Concerning]
-
-Top concerns:
-1. <most urgent>
-2. <second>
-3. <third>
-```
-
-## Behavior
-
-- Adapts checks to detected project type
-- Interactive cleanup: identifies cruft, asks before deleting
-- Safe defaults: auto-delete only OS/backup files, not source code
-- Documents everything in ASSESSMENT.md before and after cleanup
-- Asks before committing
-- Focuses on actionable findings, not style nitpicks
-
-## Error Handling
-
-- If not in a git repo: Note this but continue analysis
-- If no package.json: Treat as non-Node project, skip build checks
-- If build script missing: Skip build verification, note in findings
+If no issues:
+"Quick sanity check complete -- everything looks solid."
